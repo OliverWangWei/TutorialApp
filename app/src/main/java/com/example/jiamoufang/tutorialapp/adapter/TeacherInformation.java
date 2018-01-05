@@ -5,25 +5,39 @@ import com.example.jiamoufang.tutorialapp.R;
 import java.util.ArrayList;
 import java.util.List;
 
+import cn.bmob.v3.BmobUser;
+
 /**
  * Created by a0924 on 2017/12/30.
  */
 
-public//此为老师资讯类
-class TeacherInformation {
+public class TeacherInformation {
 
     private int pictureID;
+    private String subject;
     private String info;
     private float price;
     private int teachingAge;
     private String name;
+    private String username;
+    //username 和 name 是有区别的，前者是账户名，后者是一般的名称或昵称
 
-    public TeacherInformation(int pictureID, String info, float price, int teachingAge, String name) {
+    public TeacherInformation(int pictureID, String subject,String info, float price, int teachingAge, String name, String username) {
+        this.subject = subject;
         this.pictureID = pictureID;
         this.info = info;
         this.price = price;
         this.teachingAge = teachingAge;
         this.name = name;
+        this.username = username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getUsername() {
+        return username;
     }
 
     public String getName() {
@@ -66,13 +80,21 @@ class TeacherInformation {
         this.price = price;
     }
 
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
     //利用静态方法创造该类的对象实体
     //这里用回圈创建20个实体,只是为了表现UI可以滑动功能.
     //PS 逻辑开发时可以连这个类都注解掉, 去创建自己需要的对象个数和对象的meta-data
     public static List<TeacherInformation> initTeacherInformation() {
         List<TeacherInformation> list = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
-            list.add(new TeacherInformation(R.drawable.hit_activity_1, "小初教师", 190, 14, "何老师"));
+            list.add(new TeacherInformation(R.drawable.hit_activity_1, "小初数学","何老师", 190, 14, "何老师", "testzhu"));
         }
         return list;
     }

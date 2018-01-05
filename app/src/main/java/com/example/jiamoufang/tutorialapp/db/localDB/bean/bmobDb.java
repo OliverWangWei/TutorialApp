@@ -1,5 +1,7 @@
 package com.example.jiamoufang.tutorialapp.db.localDB.bean;
 
+import android.util.Log;
+
 import com.example.jiamoufang.tutorialapp.model.bean.Information;
 import com.example.jiamoufang.tutorialapp.model.bean.Order;
 import com.example.jiamoufang.tutorialapp.model.bean.User;
@@ -13,6 +15,7 @@ import cn.bmob.v3.BmobUser;
 import cn.bmob.v3.datatype.BmobFile;
 import cn.bmob.v3.exception.BmobException;
 import cn.bmob.v3.listener.FindListener;
+import cn.bmob.v3.listener.SaveListener;
 import cn.bmob.v3.listener.UpdateListener;
 import cn.bmob.v3.listener.UploadFileListener;
 import rx.Observable;
@@ -25,6 +28,12 @@ public class bmobDb  {
     private User user;
     private int count = 0;
 
+    // 单例模式
+    private static bmobDb instance = new bmobDb();
+    public static bmobDb getInstance() {
+        return instance;
+    }
+
     public bmobDb() {
         user = BmobUser.getCurrentUser(User.class);
     }
@@ -34,27 +43,27 @@ public class bmobDb  {
      * 如：path = "sdcard/temp.jpg"
      */
     public void modifyAvatar(String path) {
-        BmobFile bmobFile = new BmobFile(new File(path));
+        final BmobFile bmobFile = new BmobFile(new File(path));
 
-        bmobFile.uploadblock(new UploadFileListener() {
+        bmobFile.upload(new UploadFileListener() {
             @Override
             public void done(BmobException e) {
                 if(e == null){
-
+                    Log.d("Mydebug", "图片上传成功！");
+                    user.setAvatar(bmobFile);
+                    updateInfo();
                 } else {
-
+                    Log.d("Mydebug", "图片上传失败！");
                 }
             }
             @Override
-            public void onProgress(Integer value) {
-                // 返回的上传进度（百分比）
-
-            }
+            public void onProgress(Integer value) {}
         });
+
     }
 
-    /* 修改昵称
-    * @param 昵称
+    /* 修改姓名
+    * @param 姓名
     */
     public void modifyNickname(String name) {
         user.setRealName(name);
@@ -93,6 +102,15 @@ public class bmobDb  {
         updateInfo();
     }
 
+    /* 修改电话号吗
+    * @param npw:新的电话号码
+    */
+    public void modifyTelnumber(String tel) {
+        user.setMobilePhoneNumberVerified(false);
+        user.setMobilePhoneNumber(tel);
+        updateInfo();
+    }
+
     /* 修改密码
     *修改密码前先进行密码的验证，包括先输入旧密码验证和两次新密码的输入是否相同
     * 验证完成后传入参数
@@ -104,9 +122,9 @@ public class bmobDb  {
     }
 
     /* 根据学生返回订单列表
-     * 适配“我的”页面“我的老师”
      * 注意由于BmobQuery采用的是异步的方法，因此调用该函数的时候能需要采用以下方法
      */
+
     /*
       new bmobDb().findMyTeachers().subscribe(new Action1<List<Order>>() {
             @Override
@@ -130,8 +148,8 @@ public class bmobDb  {
         return query.findObjectsObservable(Order.class);
     }
 
-    /* 根据老师返回我的订单列表
-     * 适配“我的”页面“我的学员”
+    /*
+     * 根据老师返回我的订单列表
      */
     public Observable<List<Order>> findOrderForTeacher() {
 
@@ -164,16 +182,63 @@ public class bmobDb  {
         return query.findObjectsObservable(Order.class);
     }
 
+    /*
+    * 找出处于两个年级数之间的订单
+    * */
+    public Observable<List<Order>> findOrderByGradeInterval(int grade1, int grade2) {
+        BmobQuery<Order> query = new BmobQuery<Order>();
+        query.addWhereLessThanOrEqualTo("grade",grade2);
+        query.addWhereGreaterThanOrEqualTo("grade",grade1);
+        query.order("-createdAt");    //根据订单建立时间的倒序排列
+
+        return query.findObjectsObservable(Order.class);
+    }
+
     /* 根据家教科目来筛选订单
      * @param 家教科目
      */
-
     public Observable<List<Order>> findOrderBySubject(String sub) {
         BmobQuery<Order> query = new BmobQuery<Order>();
         query.addWhereEqualTo("subject", sub);
         query.order("-createdAt");    //根据订单建立时间的倒序排列
 
         return query.findObjectsObservable(Order.class);
+    }
+
+    /* 发布订单
+     * @param 参数是一个订单实例
+     * 注意传入参数前需要为order的相关属性设置对应的值
+     */
+    public void publishOrder(Order order) {
+        order.save(new SaveListener<String>() {
+            @Override
+            public void done(String objectId, BmobException e) {
+                if(e==null){
+                    Log.d("Mydebug", "订单创建成功！");
+                }else{
+                    Log.d("Mydebug", "订单创建失败！");
+                }
+            }
+        });
+    }
+
+    /* 老师接家教订单
+     * @param 参数是一个订单实例
+     * 注意传入参数前需要检查order的teacher属性是否为空
+     * 然后接单后的一些后续操作需要在逻辑层完成
+     */
+    public void receiveOrder(Order order) {
+        order.setTeacher(user);
+        order.update(user.getObjectId(),new UpdateListener() {
+            @Override
+            public void done(BmobException e) {
+                if(e==null){
+                    Log.d("Mydebug", "接单成功");
+                }else{
+                    Log.d("Mydebug", "接单失败");
+                }
+            }
+        });
     }
 
     protected void updateInfo() {

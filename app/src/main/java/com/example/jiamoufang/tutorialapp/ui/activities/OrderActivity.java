@@ -9,6 +9,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -16,9 +17,10 @@ import android.widget.EditText;
 import android.widget.Spinner;
 
 import com.example.jiamoufang.tutorialapp.R;
+import com.example.jiamoufang.tutorialapp.ui.base.ParentWithNaviActivity;
 
 
-public class OrderActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+public class OrderActivity extends ParentWithNaviActivity implements AdapterView.OnItemSelectedListener {
 
     private Spinner spinner_grade, spinner_class, spinner_subject, spinner_diploma;
 
@@ -33,11 +35,17 @@ public class OrderActivity extends AppCompatActivity implements AdapterView.OnIt
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_order);
 
-        initView();
+        initViews();
+        initNaviView();
 
     }
 
-    private void initView() {
+    @Override
+    protected String title() {
+        return "找老师";
+    }
+
+    private void initViews() {
         //绑定spinner
         spinner_class = (Spinner) findViewById(R.id.order_class_spinner);
         spinner_grade = (Spinner) findViewById(R.id.order_grade_spinner);
@@ -55,7 +63,16 @@ public class OrderActivity extends AppCompatActivity implements AdapterView.OnIt
         findViewById(R.id.order_reset).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                order_salary.setText("");
+                order_address.setText("");
+                //默认学员为小学学生
+                spinner_class.setSelection(0);
+                //小学一年级
+                spinner_grade.setSelection(0);
+                //科目默认语文
+                spinner_subject.setSelection(0);
+                //老师学历默认为本科
+                spinner_diploma.setSelection(4);
             }
         });
 
@@ -63,10 +80,27 @@ public class OrderActivity extends AppCompatActivity implements AdapterView.OnIt
         findViewById(R.id.order_submit).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                boolean ok = checkValid();
+                if (ok) {
 
+                }
             }
         });
-
+    }
+    /*
+    * 检车所有输入或填写是否合法
+    * */
+    private boolean checkValid() {
+        if (TextUtils.isEmpty(order_address.getText().toString())|| TextUtils.isEmpty( order_salary.getText().toString())) {
+            toast("输入不能空");
+            return false;
+        }
+        if (spinner_grade.toString() == null || spinner_diploma.toString() == null
+                || spinner_subject.toString() == null || spinner_class.toString() == null) {
+            toast("请完成所有选择");
+            return false;
+        }
+        return true;
     }
 
     @Override

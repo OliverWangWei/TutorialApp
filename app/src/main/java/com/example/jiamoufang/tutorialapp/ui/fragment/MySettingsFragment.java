@@ -1,21 +1,27 @@
 package com.example.jiamoufang.tutorialapp.ui.fragment;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.example.jiamoufang.tutorialapp.R;
 import com.example.jiamoufang.tutorialapp.factory.ImageLoaderFactory;
 import com.example.jiamoufang.tutorialapp.model.bean.User;
 import com.example.jiamoufang.tutorialapp.ui.activities.CurrentUserInfoSettingActivity;
+import com.example.jiamoufang.tutorialapp.ui.activities.MyOrdersActivity;
+import com.example.jiamoufang.tutorialapp.ui.activities.MyStudentsActivity;
+import com.example.jiamoufang.tutorialapp.ui.activities.MyTeachersActivity;
 import com.example.jiamoufang.tutorialapp.ui.activities.OrderActivity;
 import com.example.jiamoufang.tutorialapp.ui.base.ParentWithNaviFragment;
 
@@ -76,35 +82,32 @@ public class MySettingsFragment  extends ParentWithNaviFragment{
         initNaviView();
         ButterKnife.bind(this, rootView);
         //get current user
-        currentUser = BmobUser.getCurrentUser(User.class);
         /*initialize*/
         initUserInfo();
+
         return rootView;
     }
 
-    /*
-    * initialize the information of current user
-    * by fangjiamou
-    * */
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d("Mydebug","执行了这个函数吗");
+        initUserInfo();
+    }
+
     private void initUserInfo() {
-        BmobFile bmobFile = currentUser.getAvatar();
-        String fileUrl = null;
-        String url = null;
+        currentUser = BmobUser.getCurrentUser(User.class);
+
         /*如果用户当前头像不为null
         * 尝试到云端数据库获取图片
         * */
-        if (bmobFile != null) {
-            try{
-                fileUrl = bmobFile.getFileUrl();
-                url = bmobFile.getUrl();
-            }catch (Exception e) {
-                toast("云端获取用户头像失败");
-                e.printStackTrace();
-            }
+        if (currentUser.getAvatar() != null) {
+            //测试过URL是正确的
+            Glide.with(this).load(currentUser.getAvatar().getUrl()).into(my_photo);
+            // ImageLoaderFactory.getLoader().loadAvatar(, currentUser.getAvatar().getUrl(), R.mipmap.default_ss);
+        } else {
+            Glide.with(this).load(R.mipmap.default_ss).into(my_photo);
         }
-        //加载头像,如果为null，则使用默认
-        ImageLoaderFactory.getLoader().loadAvatar(my_photo,
-                bmobFile == null ? null : (fileUrl == null) ? (url == null ? null:url):fileUrl, R.mipmap.default_ss);
         //用户实名or昵称or用户名
         if (currentUser.getRealName()!= null) {
             user_name.setText(currentUser.getRealName());
@@ -115,7 +118,7 @@ public class MySettingsFragment  extends ParentWithNaviFragment{
         if (currentUser.getRole()  == null) {
             user_identity.setText("未知");
         } else {
-            user_identity.setText(currentUser.getRole() == true? "教员":"学员");
+            user_identity.setText(currentUser.getRole() == true ? "教员":"学员");
         }
     }
 
@@ -125,7 +128,7 @@ public class MySettingsFragment  extends ParentWithNaviFragment{
     * */
     @Override
     protected String title() {
-        return "我的";
+        return null;
     }
 
     /*
@@ -152,6 +155,7 @@ public class MySettingsFragment  extends ParentWithNaviFragment{
                 * it is up to you, but i prefer the former which is more efficient
                 * */
                 Bundle bundle1 = new Bundle();
+                bundle1.putSerializable("user",currentUser);
                 startActivity(CurrentUserInfoSettingActivity.class, bundle1);
                 break;
             case R.id.img_schedule:
@@ -179,18 +183,25 @@ public class MySettingsFragment  extends ParentWithNaviFragment{
                 * look over your teachers that you like
                 * show them in another Activity
                 * */
+                Bundle bundle6 = new Bundle();
+                startActivity(MyTeachersActivity.class, bundle6);
                 break;
             case R.id.ll_my_student:
                 /*
                 * look over your students that you like
                 * show them in another Activity
                 * */
+                Bundle bundle7 = new Bundle();
+                startActivity(MyStudentsActivity.class, bundle7);
                 break;
             case R.id.ll_my_orders:
                 /*
                 * look over your orders (you may be student or teacher, it is both ok)
                 * show them in another Activity
                 * */
+                Bundle bundle8 = new Bundle();
+                bundle8.putSerializable("user", currentUser);
+                startActivity(MyOrdersActivity.class, bundle8);
                 break;
             default:
                 break;
